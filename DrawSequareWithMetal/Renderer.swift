@@ -26,54 +26,55 @@ class Renderer: NSObject {
 //        -1,1,0
 //    ]
     
-    //优化 - 用两个数组相结合  vertices数组存放正方形的顶点坐标, indces数组存放每次使用vertices数组中的哪三组数据作为三角形的顶点就行绘制
-    var vertices: [Float] = [
-        -1,1,0,
-        -1,-1,0,
-        1,-1,0,
-        1,1,0
-    ]
-    
-    var indces: [UInt16] = [
-        0,1,2,
-        2,3,0
-    ]
+//    //优化 - 用两个数组相结合  vertices数组存放正方形的顶点坐标, indces数组存放每次使用vertices数组中的哪三组数据作为三角形的顶点就行绘制
+//    var vertices: [Float] = [
+//        -1,1,0,
+//        -1,-1,0,
+//        1,-1,0,
+//        1,1,0
+//    ]
+//    
+//    var indces: [UInt16] = [
+//        0,1,2,
+//        2,3,0
+//    ]
     
     //创建管道状态及缓冲区(用来存放顶点)
     var pipelineState: MTLRenderPipelineState?
-    var vertexBuffer: MTLBuffer?
+//    var vertexBuffer: MTLBuffer?
+//
+//    //索引缓冲区
+//    var indexBuffer: MTLBuffer?
+//
+//    //动画的一些参数
+//    //创建移动量
+//    struct Constants {
+//        var animateBy: Float = 0.0
+//    }
+//
+//    var constant = Constants()
+//
+//    var time: Float = 0
     
-    //索引缓冲区
-    var indexBuffer: MTLBuffer?
-    
-    //动画的一些参数
-    //创建移动量
-    struct Constants {
-        var animateBy: Float = 0.0
-    }
-    
-    var constant = Constants()
-    
-    var time: Float = 0
-    
+    var scene: Scene?
     
     init(device: MTLDevice) {
         self.device = device
         commandQueue = device.makeCommandQueue()!
         super.init()
         
-        buildModel()
+//        buildModel()
         buildPipelineState()
     }
     
-    //处理顶点
-    private func buildModel(){
-        //创建顶点缓冲区,保存了顶点数组中的顶点位置
-        //每一个条目都是一个float, 所以缓冲区的长度也就是顶点的数量
-        vertexBuffer = device.makeBuffer(bytes: vertices, length: vertices.count * MemoryLayout<Float>.size, options: [])
-        
-        indexBuffer = device.makeBuffer(bytes: indces, length: indces.count * MemoryLayout<Float>.size, options: [])
-    }
+//    //处理顶点
+//    private func buildModel(){
+//        //创建顶点缓冲区,保存了顶点数组中的顶点位置
+//        //每一个条目都是一个float, 所以缓冲区的长度也就是顶点的数量
+//        vertexBuffer = device.makeBuffer(bytes: vertices, length: vertices.count * MemoryLayout<Float>.size, options: [])
+//        
+//        indexBuffer = device.makeBuffer(bytes: indces, length: indces.count * MemoryLayout<Float>.size, options: [])
+//    }
     
     //处理管道状态
     private func buildPipelineState(){
@@ -111,17 +112,17 @@ extension Renderer: MTKViewDelegate{
     func draw(in view: MTKView) {
         guard let drawable = view.currentDrawable,
             let descriptor = view.currentRenderPassDescriptor,
-            let pipelineState = pipelineState,
-            let indexBuffer = indexBuffer else { return  }
+//        let indexBuffer = indexBuffer,
+            let pipelineState = pipelineState else { return  }
         
         //创建缓冲区 commandbuffer
         let commandbuffer = commandQueue.makeCommandBuffer()
         
         //设置时间变量  preferredFramesPerSecond当前view每秒钟调用次数
-        time += 1 / Float(view.preferredFramesPerSecond)
-        
-        let animateBy = abs(sin(time)) / 2 + 0.5
-        constant.animateBy = animateBy
+//        time += 1 / Float(view.preferredFramesPerSecond)
+//
+//        let animateBy = abs(sin(time)) / 2 + 0.5
+//        constant.animateBy = animateBy
         
         
         //把命令进行编码
@@ -134,14 +135,21 @@ extension Renderer: MTKViewDelegate{
          */
         //锁所有对顶点的处理要处理完成之后才能进行绘制,否则会崩溃
         //处理顶点缓冲区
-        commandEncode?.setVertexBuffer(vertexBuffer, offset: 0, index: 0)
-        //处理顶点的移动
-        commandEncode?.setVertexBytes(&constant, length: MemoryLayout<Constants>.stride, index: 1)
+//        commandEncode?.setVertexBuffer(vertexBuffer, offset: 0, index: 0)
+//        //处理顶点的移动
+//        //stride 对象占用的内存及后面的内存碎片之和
+//        commandEncode?.setVertexBytes(&constant, length: MemoryLayout<Constants>.stride, index: 1)
+//
+//        //===================上面的顶点操作处理完成之后再绘制===================
+//        //绘制数组中的顶点
+//        commandEncode?.drawIndexedPrimitives(type: .triangle, indexCount: indces.count, indexType: .uint16, indexBuffer: indexBuffer, indexBufferOffset: 0)
         
-        //===================上面的顶点操作处理完成之后再绘制===================
-        //绘制数组中的顶点
-        commandEncode?.drawIndexedPrimitives(type: .triangle, indexCount: indces.count, indexType: .uint16, indexBuffer: indexBuffer, indexBufferOffset: 0)
         
+        //===============封装后调整的代码=============
+        //调用动画的时间
+        let detailTime = 1 / Float(view.preferredFramesPerSecond)
+        scene?.render(commandEncoder: commandEncode!, detailTime: detailTime)
+        //===============结束=======================
         
         //结束编码
         commandEncode?.endEncoding()

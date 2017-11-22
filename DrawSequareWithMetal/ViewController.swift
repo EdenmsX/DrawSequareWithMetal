@@ -30,6 +30,8 @@ class ViewController: UIViewController {
         
         metalView.delegate = render
         
+        render?.scene = GameScene(device: device, size: view.bounds.size)
+        
     }
 
     override func didReceiveMemoryWarning() {
