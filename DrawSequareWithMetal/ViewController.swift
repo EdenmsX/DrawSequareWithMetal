@@ -17,9 +17,7 @@ class ViewController: UIViewController {
     }
     
     
-    
-    
-    
+
     
     var render: Renderer?
     
